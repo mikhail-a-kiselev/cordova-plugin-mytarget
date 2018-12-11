@@ -4,7 +4,7 @@ Base of this plugin is https://github.com/DrMoriarty/cordova-plugin-mytarget v.1
 
 Differences:
 
-    - autoreftesh is disabled
+    - autorefresh is disabled
     - you can refresh banner calling MyTarget.makeBanner function again
 
 MyTarget integration for cordova
