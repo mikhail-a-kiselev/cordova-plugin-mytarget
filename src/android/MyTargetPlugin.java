@@ -132,7 +132,7 @@ public class MyTargetPlugin extends CordovaPlugin {
     private boolean makeBanner(final int slot, final CallbackContext callbackContext) {
         if(bannerView != null) {
             Log.d(TAG, "Banner view already created");
-            success(callbackContext);
+            //success(callbackContext);
 			bannerView.load();
         } else {
             getActivity().runOnUiThread(new Runnable() {
