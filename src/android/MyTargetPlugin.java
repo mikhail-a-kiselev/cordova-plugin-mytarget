@@ -30,6 +30,8 @@ public class MyTargetPlugin extends CordovaPlugin {
     private static final String ACTION_MAKE_BANNER = "makeBanner";
     private static final String ACTION_REMOVE_BANNER = "removeBanner";
     private static final String ACTION_MAKE_FULLSCREEN = "makeFullscreen";
+	private static final String ACTION_SET_AGE = "setAge";
+	private static final String ACTION_SET_GENDER = "setGender";
     private FrameLayout layout = null;
     private MyTargetView bannerView = null;
 
@@ -65,15 +67,18 @@ public class MyTargetPlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
         if(ACTION_INIT.equals(action)) {
-            Log.i(TAG, "MyTarget initialize is not used");
-            return true;
+            return init(args.getInt(0));
         } else if(ACTION_MAKE_BANNER.equals(action)) {
             return makeBanner(args.getInt(0), callbackContext);
         } else if(ACTION_MAKE_FULLSCREEN.equals(action)) {
             return makeFullScreen(args.getInt(0), callbackContext);
         } else if(ACTION_REMOVE_BANNER.equals(action)) {
             return removeBanner(callbackContext);
-        }
+        }/* else if(ACTION_SET_AGE.equals(action)) {
+            return setAge(args.getInt(0),callbackContext);
+        } else if(ACTION_SET_GENDER.equals(action)) {
+            return setGender(args.getString(0), callbackContext);
+        }*/
         Log.e(TAG, "Unknown action: "+action);
         fail("Unimplemented method: "+action, callbackContext);
         return true;
@@ -104,24 +109,57 @@ public class MyTargetPlugin extends CordovaPlugin {
             bannerView = null;
         }
     }
-
+	
+	private boolean init(final int slot) {
+		if(bannerView != null) {
+			Log.e(TAG, "Banner view already created");
+		} else {
+			bannerView = new MyTargetView(getActivity());
+			bannerView.init(slot, null, false);
+            final FrameLayout.LayoutParams adViewLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0x50);
+            layout.post(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "Make new banner with slot id: "+slot);
+                    layout.addView(bannerView, adViewLayoutParams);
+                }
+            });
+		}
+		return true;
+	}
+	private boolean setAge(final int age, final CallbackContext callbackContext) {
+		if(bannerView != null) {
+//			CustomParams customParams = bannerView.getCustomParams();
+//			customParams.setAge(age);
+			success(callbackContext);
+		} else {
+			fail("You need to init MyTarget first", callbackContext);
+			Log.e(TAG, "You need to init MyTarget first");
+			
+		}
+		return true;
+	}
+	private boolean setGender(final String gender, final CallbackContext callbackContext) {
+		if(bannerView != null) {
+//			CustomParams customParams = bannerView.getCustomParams();
+			if(gender.equals("m")){
+//				customParams.setGender(CustomParams.Gender.MALE);
+				success(callbackContext);
+			} else if(gender.equals("f")){
+//				customParams.setGender(CustomParams.Gender.FEMALE);
+				success(callbackContext);
+			} else {
+				fail("unknown gender (right value is m or f)", callbackContext);
+			}
+		} else {
+			fail("You need to init MyTarget first", callbackContext);
+			Log.e(TAG, "You need to init MyTarget first");
+		}
+		return true;
+	}
     private boolean makeBanner(final int slot, final CallbackContext callbackContext) {
 		getActivity().runOnUiThread(new Runnable() {
             public void run() {
-				if(bannerView != null) {
-					Log.d(TAG, "Banner view already created");
-				} else {
-					bannerView = new MyTargetView(getActivity());
-					bannerView.init(slot, null, false);
-                    
-                    final FrameLayout.LayoutParams adViewLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0x50);
-                    layout.post(new Runnable() {
-                        public void run() {
-                            Log.i(TAG, "Make new banner with slot id: "+slot);
-                            layout.addView(bannerView, adViewLayoutParams);
-                        }
-                    });
-				}
+				init(slot);
 				bannerView.setListener(new MyTargetView.MyTargetViewListener() {
                     @Override
                     public void onLoad(MyTargetView myTargetView) {
