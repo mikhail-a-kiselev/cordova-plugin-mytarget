@@ -3,13 +3,9 @@ package ru.orangeapps.mytarget;
 import android.content.Context;
 import android.util.Log;
 import android.app.Activity;
-//import android.widget.AbsoluteLayout;
-//import android.support.v4.widget.DrawerLayout;
+
 import android.widget.FrameLayout;
-//import android.widget.GridLayout;
-//import android.widget.LinearLayout;
-//import android.widget.RelativeLayout;
-//import android.support.v4.widget.SlidingPaneLayout;
+
 import android.view.ViewGroup;
 
 import org.json.JSONException;
@@ -35,7 +31,6 @@ public class MyTargetPlugin extends CordovaPlugin {
     private static final String ACTION_REMOVE_BANNER = "removeBanner";
     private static final String ACTION_MAKE_FULLSCREEN = "makeFullscreen";
     private FrameLayout layout = null;
-    //private CallbackContext _callbackContext;
     private MyTargetView bannerView = null;
 
     private Context getApplicationContext() {
@@ -60,36 +55,17 @@ public class MyTargetPlugin extends CordovaPlugin {
         }
     }
 
-    /*
-    @Override
-    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        CordovaActivity activity = (CordovaActivity)this.cordova.getActivity();
-        layout = (RelativeLayout)activity.getWindow().getDecorView().getRootView();
-        Log.i(TAG, "1) Find root object with type "+layout.getClass().toString()+" child of "+layout.getClass().getSuperClass().toString());
-    }
-    */
-
     @Override
     protected void pluginInitialize() {
         CordovaActivity activity = (CordovaActivity)this.cordova.getActivity();
         layout = (FrameLayout)activity.getWindow().getDecorView().getRootView();
-        /*
-        if(layout instanceof AbsoluteLayout) Log.i(TAG, "AbsoluteLayout!!!");
-        if(layout instanceof DrawerLayout) Log.i(TAG, "DrawerLayout!!!");
-        if(layout instanceof FrameLayout) Log.i(TAG, "FrameLayout!!!");
-        if(layout instanceof GridLayout) Log.i(TAG, "GridLayout!!!");
-        if(layout instanceof LinearLayout) Log.i(TAG, "LinearLayout!!!");
-        if(layout instanceof RelativeLayout) Log.i(TAG, "RelativeLayout!!!");
-        if(layout instanceof SlidingPaneLayout) Log.i(TAG, "SlidingPaneLayout!!!");
-        */
         Log.i(TAG, "Find root object with type "+layout.getClass().toString());
     }
 
     @Override
     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
-        //this._callbackContext = callbackContext;
         if(ACTION_INIT.equals(action)) {
-            Log.i(TAG, "MyTarget initialize");
+            Log.i(TAG, "MyTarget initialize is not used");
             return true;
         } else if(ACTION_MAKE_BANNER.equals(action)) {
             return makeBanner(args.getInt(0), callbackContext);
@@ -130,53 +106,46 @@ public class MyTargetPlugin extends CordovaPlugin {
     }
 
     private boolean makeBanner(final int slot, final CallbackContext callbackContext) {
-        if(bannerView != null) {
-            Log.d(TAG, "Banner view already created");
-            //success(callbackContext);
-			bannerView.load();
-        } else {
-            getActivity().runOnUiThread(new Runnable() {
-                    public void run() {
-                        bannerView = new MyTargetView(getActivity());
-                        //bannerView.init(slot);
-						bannerView.init(slot, null, false);
+		getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+				if(bannerView != null) {
+					Log.d(TAG, "Banner view already created");
+				} else {
+					bannerView = new MyTargetView(getActivity());
+					bannerView.init(slot, null, false);
+                    
+                    final FrameLayout.LayoutParams adViewLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0x50);
+                    layout.post(new Runnable() {
+                        public void run() {
+                            Log.i(TAG, "Make new banner with slot id: "+slot);
+                            layout.addView(bannerView, adViewLayoutParams);
+                        }
+                    });
+				}
+				bannerView.setListener(new MyTargetView.MyTargetViewListener() {
+                    @Override
+                    public void onLoad(MyTargetView myTargetView) {
+                        // Данные успешно загружены, запускаем показ объявлений
+                        Log.i(TAG, "Banner has been loaded");
+                        myTargetView.start();
+                        success(callbackContext);
+                        }
 
-                        // Добавляем экземпляр в лэйаут главной активности
-                        final FrameLayout.LayoutParams adViewLayoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0x50);
-                        layout.post(new Runnable() {
-                                public void run() {
-                                    Log.i(TAG, "Make new banner with slot id: "+slot);
-                                    layout.addView(bannerView, adViewLayoutParams);
-                                }
-                            });
+                    @Override
+                        public void onNoAd(String reason, MyTargetView myTargetView) {
+                        Log.e(TAG, "No ads for banner");
+                        fail("No ads for banner "+slot, callbackContext);
+                    }
 
-                        // Устанавливаем слушатель событий
-                        bannerView.setListener(new MyTargetView.MyTargetViewListener() {
-                                @Override
-                                public void onLoad(MyTargetView myTargetView) {
-                                    // Данные успешно загружены, запускаем показ объявлений
-                                    Log.i(TAG, "Banner has been loaded");
-                                    myTargetView.start();
-                                    success(callbackContext);
-                                }
-
-                                @Override
-                                public void onNoAd(String reason, MyTargetView myTargetView) {
-                                    Log.e(TAG, "No ads for banner");
-                                    fail("No ads for banner "+slot, callbackContext);
-                                }
-
-                                @Override
-                                public void onClick(MyTargetView myTargetView) {
-                                    Log.i(TAG, "Banner clicked");
-                                }
-                            });
-
-                        // Запускаем загрузку данных
-                        bannerView.load();
+                    @Override
+                    public void onClick(MyTargetView myTargetView) {
+                        Log.i(TAG, "Banner clicked");
                     }
                 });
-        }
+				bannerView.load();
+			}
+		});
+
         return true;
     }
 
